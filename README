@@ -1,0 +1,73 @@
+This code acccompanies the paper "Provable Algorithms for Inference in
+Topic Models", ICML 2016, by Sanjeev Arora, Rong Ge, Frederic Koehler,
+and Tengyu Ma. (Arxiv link to be added.)  It is designed to be used
+with the code for learning topic models via anchor words found at:
+https://github.com/MyHumbleSelf/anchor-baggage/tree/master/anchor-word-recovery
+however, it can be used with any topic modeling package as long as
+the document-word and topic-word matrices can be output in
+numpy-compatible format.
+
+Executable files in repository:
+1. invert.py
+This contains code for computing a left-inverse B to topic-word matrix A
+which is minimal in the entrywise max-norm. (l1 -> linfty norm).
+This step can be computationally intensive for large A.
+
+2. main.py
+This contains code for running methods TLI, TLI+MLE, and TLI+MAP on
+semisynthetic data as well as real data. 
+
+3. synth.py
+Contains code for synthesizing semisynthetic data, useful for evaluating
+gibbs sampling.
+
+4. GibbsInference.java
+This contains code for estimating the hidden topic vector of a document
+via Collapsed Gibbs Sampling. We have borrowed a standard implementation
+of Gibbs sampling from the anchor-word extension to MALLET,
+available at (https://github.com/mimno/anchor), Copyright David Mimno,
+and available under the MIT License.
+
+All other code is copyright Frederic Koehler and distributed under
+the MIT License as well.
+
+Please email Frederic Koehler (f.koehler427@gmail.com) if you have any
+issues or questions related to this code.
+
+SOFTWARE DEPENDENCIES: This code depends on python (>= 2.7) and the
+packages numpy, scipy, and cvxopt with glpk (or mosek) support. Use of
+the default cvxopt lp solver is discouraged because it is relatively
+slow.
+
+USAGE: For the examples we assume the topic-word matrix
+is stored in a file demo_L2_out.nips.100.A and the document-word
+matrix is stored in a file M_nips.full_docs.mat.trunc.mat.
+Various settings can be tweaked in the file settings.py.
+
+Compute inverse matrix with small entries, save as Bmatrix.txt:
+> python invert.py demo_L2_out.nips.100.A Bmatrix.txt
+
+Benchmark performance of TLI, TLI+MLE, TLI+MAP on semisynthetic data:
+> python main.py infer demo_L2_out.nips.100.A Bmatrix.txt
+
+Add optional -d to switch from uniform sparse prior to Dirichlet prior
+Add optional -r to switch to top-r thresholding scheme
+Std-output contains diagonstic information;
+Output of experiments is named RESULTS.[d|s].(name of A-file)
+Format is tab-separated csv; first column is document length,
+next two columns are l1 and linfty recovery score of TLI pre-normalization, 
+next two are l1 and linfty score of TLI with normalization, 
+next two are same but for TLI+MLE, and last two are same
+but for TLI+MAP.
+
+Benchmark performance of Gibbs on semisynthetic data
+> rm -rf synth; python synth.py demo_L2_out.nips.100.A 
+(This step creates synthetic documents in directory synth with ground
+ truth in synth_topics)
+> javac GibbsInference.java; java GibbsInference infer
+
+Compute accuracy of TLI-support on real data, using Gibbs as base truth:
+> rm -rf real_doc
+> python main.py infer demo_L2_out.nips.100.A Bmatrix.txt M_nips.full_docs.mat.trunc.mat.
+> javac GibbsInference.java; java GibbsInference estimate-support
+
